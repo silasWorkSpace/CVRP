@@ -11,18 +11,27 @@ A Capacitated Vehicle Routing Problem (CVRP) optimization system that calculates
 - Address search and geocoding.
 - Persistent storage for locations and calculated distance matrices.
 
+## Project Structure
+
+```text
+CVRP/
+├── backend/            # FastAPI Backend
+│   ├── algorithms/    # Routing logic (Greedy, DP)
+│   ├── api/           # API Endpoints
+│   ├── main.py        # Application entry point
+│   ├── models.py      # SQLAlchemy DB models
+│   └── database.py    # DB Configuration
+├── frontend/           # React Frontend (Vite)
+│   ├── src/           # Component & App source
+│   └── public/        # Static assets
+├── requirements.txt    # Python dependencies
+└── README.md           # Documentation
+```
+
 ## Tech Stack
 
-### Backend
-- Framework: FastAPI (Python)
-- Database: MySQL with SQLAlchemy ORM
-- Mapping/Algorithms: OSMNX, NetworkX, Geopy
-- Deployment: Uvicorn
-
-### Frontend
-- Framework: React (Vite)
-- Mapping: Leaflet, React-Leaflet
-- API Client: Axios
+- **Backend:** FastAPI, SQLAlchemy (MySQL), OSMNX, NetworkX
+- **Frontend:** React, Vite, Leaflet, Axios
 
 ## Installation
 
@@ -32,15 +41,12 @@ A Capacitated Vehicle Routing Problem (CVRP) optimization system that calculates
    ```bash
    cd backend
    ```
-
 2. Install dependencies:
    ```bash
    pip install -r ../requirements.txt
    ```
-
-3. Ensure MySQL is running and update credentials in `database.py` if necessary.
-
-4. Run the server:
+3. Update MySQL credentials in `database.py`.
+4. Start the server:
    ```bash
    uvicorn main:app --reload
    ```
@@ -51,21 +57,15 @@ A Capacitated Vehicle Routing Problem (CVRP) optimization system that calculates
    ```bash
    cd frontend
    ```
-
 2. Install dependencies:
    ```bash
    npm install
    ```
-
 3. Run the development server:
    ```bash
    npm run dev
    ```
 
-## Usage
+## License
 
-1. Open the frontend application in your browser.
-2. Search for and add delivery locations (Depot and Customers).
-3. Set vehicle capacity and customer demands.
-4. Run the optimization algorithm to generate efficient routes.
-5. Visualize the routes on the interactive map.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
