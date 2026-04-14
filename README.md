@@ -66,6 +66,25 @@ CVRP/
    npm run dev
    ```
 
+### Seeding Data
+
+To populate your database with real-world locations in Ho Chi Minh City (HCMC):
+
+1. From the `backend` directory, run:
+   ```bash
+   python seed_data.py
+   ```
+   This will add a central Depot (Hồ Con Rùa) and several customer locations (Dinh Độc Lập, Landmark 81, etc.) to your MySQL database.
+
+## Usage
+
+1. Open the interactive map on the frontend.
+2. Select the **Maximum Vehicles** and **Vehicle Capacity**.
+3. Choose an **Optimization Algorithm**:
+   - **Greedy Clustering (Nearest Neighbor):** Fast, rule-based grouping.
+   - **Greedy + DP (Held-Karp):** Combines clustering with dynamic programming for optimized route sequences.
+4. Click **Run Optimization** to visualize the routes and view total distance and execution time.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
