@@ -28,11 +28,9 @@ def create_location(location: schemas.LocationCreate, db: Session = Depends(get_
 
 @router.delete("/{location_id}")
 def delete_location(location_id: int, db: Session = Depends(get_db)):
-    """Xóa một điểm khỏi bản đồ"""
     loc = db.query(models.Location).filter(models.Location.id == location_id).first()
-    if not loc:
-        raise HTTPException(status_code=404, detail="Không tìm thấy địa điểm")
-    
-    db.delete(loc)
-    db.commit()
-    return {"message": "Đã xóa thành công"}
+    if loc:
+        db.delete(loc)
+        db.commit()
+        return {"status": "success", "message": "Đã xóa địa điểm"}
+    raise HTTPException(status_code=404, detail="Không tìm thấy địa điểm")

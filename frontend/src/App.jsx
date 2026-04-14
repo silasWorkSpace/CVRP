@@ -4,82 +4,118 @@ import MapViewer from './components/MapViewer';
 import ControlPanel from './components/ControlPanel';
 import './App.css';
 
-// Link tới FastAPI Backend của bạn
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('home'); // 'home' hoặc 'data'
   const [locations, setLocations] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchCoords, setSearchCoords] = useState(null);
 
-  // Vừa mở web lên là gọi API lấy danh sách kho và khách hàng vẽ lên map ngay
-  useEffect(() => {
-    fetchLocations();
-  }, []);
+  useEffect(() => { fetchLocations(); }, []);
 
   const fetchLocations = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/locations/`);
-      setLocations(response.data);
-    } catch (error) {
-      console.error("Lỗi khi tải địa điểm:", error);
-      alert("Không thể kết nối đến Backend.");
-    }
+      const res = await axios.get(`${API_BASE_URL}/locations/`);
+      setLocations(res.data);
+    } catch (error) { console.error("Lỗi:", error); }
   };
 
-  const handleAddLocation = async (newLocationData) => {
+  const handleAddLocation = async (data) => {
     try {
-      await axios.post(`${API_BASE_URL}/locations/`, newLocationData);
-      alert("Đã thêm địa điểm thành công!");
-      fetchLocations(); // Tải lại danh sách để điểm mới hiện lên bản đồ ngay lập tức
-    } catch (error) {
-      console.error("Lỗi khi thêm:", error);
-      alert("Không thể lưu địa điểm này!");
-    }
+      await axios.post(`${API_BASE_URL}/locations/`, data);
+      fetchLocations();
+    } catch (error) { alert("Không thể lưu!"); }
   };
 
-  // Hàm này được gọi khi bấm nút "Chạy thuật toán"
-  // 🌟 Đã thêm tham số algorithmType vào đây
+  // Xóa địa điểm
+  const handleDeleteLocation = async (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa địa điểm này?")) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/locations/${id}`);
+      fetchLocations();
+      setRoutes([]); // Xóa đường đi cũ đi vì bản đồ đã thay đổi
+    } catch (error) { alert("Lỗi khi xóa!"); }
+  };
+
   const handleSolve = async (numVehicles, capacity, algorithmType) => {
-    setLoading(true);
-    setStats(null);
-    setRoutes([]);
-    
+    setLoading(true); setStats(null); setRoutes([]);
     try {
-      const response = await axios.post(`${API_BASE_URL}/solver/solve-cvrp`, {
-        num_vehicles: numVehicles,
-        capacity: capacity,
-        algorithm_type: algorithmType // 🌟 Truyền biến động vào thay vì gõ chết "greedy_dp"
+      const res = await axios.post(`${API_BASE_URL}/solver/solve-cvrp`, {
+        num_vehicles: numVehicles, capacity, algorithm_type: algorithmType 
       });
-      
-      const data = response.data;
-      setRoutes(data.routes); 
-      
+      setRoutes(res.data.routes); 
       setStats({
-        total_system_distance: data.total_system_distance,
-        execution_time_ms: data.execution_time_ms,
-        vehicles_used: data.vehicles_used
+        total_system_distance: res.data.total_system_distance,
+        execution_time_ms: res.data.execution_time_ms,
+        vehicles_used: res.data.vehicles_used
       });
-    } catch (error) {
-      console.error("Lỗi thuật toán:", error);
-      alert("Lỗi khi giải bài toán! Xem console để biết chi tiết.");
-    } finally {
-      setLoading(false);
-    }
+      setActiveTab('home'); // Tự động nhảy về trang bản đồ khi chạy xong
+    } catch (error) { alert("Lỗi tính toán!"); } 
+    finally { setLoading(false); }
   };
 
   return (
     <div className="app-container">
-      <div className="sidebar-container">
-        <ControlPanel onSolve={handleSolve} stats={stats} loading={loading} />
-      </div>
-      <div className="map-container">
-        <MapViewer locations={locations} routes={routes} />
+      {/* THANH NAVBAR */}
+      <nav className="navbar">
+        <div className="nav-brand">CVRP Optimizer</div>
+        <div className="nav-links">
+          <button className={activeTab === 'home' ? 'active' : ''} onClick={() => setActiveTab('home')}>
+            Trang chủ (Bản đồ)
+          </button>
+          <button className={activeTab === 'data' ? 'active' : ''} onClick={() => setActiveTab('data')}>
+            Quản lý Dữ liệu ({locations.length})
+          </button>
+        </div>
+      </nav>
+
+      {/* Phần chính*/}
+      <div className="main-content">
+        {activeTab === 'home' ? (
+          <>
+            <div className="sidebar-container">
+              <ControlPanel onSolve={handleSolve} stats={stats} loading={loading} routes={routes} locations={locations} onSearchResult={setSearchCoords} />
+            </div>
+            <div className="map-container">
+              <MapViewer locations={locations} routes={routes} onAddLocation={handleAddLocation} searchCoords={searchCoords} />
+            </div>
+          </>
+        ) : (
+          /* TRANG QUẢN LÝ DỮ LIỆU */
+          <div className="data-panel">
+            <h2>Danh sách Địa điểm đã lưu</h2>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tên địa điểm</th>
+                  <th>Phân loại</th>
+                  <th>Nhu cầu (Demand)</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {locations.map(loc => (
+                  <tr key={loc.id}>
+                    <td>#{loc.id}</td>
+                    <td><strong>{loc.name}</strong></td>
+                    <td>{loc.is_depot ? <span className="badge depot">Kho hàng</span> : <span className="badge customer">Khách hàng</span>}</td>
+                    <td>{loc.is_depot ? '-' : loc.demand}</td>
+                    <td>
+                      <button className="delete-btn" onClick={() => handleDeleteLocation(loc.id)}>Xóa</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export default App;
-

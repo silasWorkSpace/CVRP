@@ -97,3 +97,99 @@ input { padding: 10px; border-radius: 5px; border: none; font-size: 16px; }
   font-weight: bold;
   margin: 0 4px;
 }
+
+.app-container {
+  display: flex;
+  flex-direction: column; /* Đổi thành cột để Navbar nằm trên cùng */
+  height: 100vh;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.navbar {
+  background: #2c3e50;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.nav-brand {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.nav-links button {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 8px 15px;
+  margin-left: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.nav-links button:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.nav-links button.active {
+  background: #e74c3c;
+  border-color: #e74c3c;
+  font-weight: bold;
+}
+
+/* Data Table */
+.data-panel {
+  padding: 30px;
+  width: 100%;
+  background: #ecf0f1;
+  overflow-y: auto;
+}
+
+.data-table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table th, .data-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.data-table th {
+  background: #34495e;
+  color: white;
+}
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.badge.depot { background: #e74c3c; color: white; }
+.badge.customer { background: #3498db; color: white; }
+
+.delete-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.delete-btn:hover { background: #c0392b; }

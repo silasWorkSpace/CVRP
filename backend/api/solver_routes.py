@@ -72,13 +72,32 @@ def solve_routing_problem(request: schemas.CVRPSolveRequest, db: Session = Depen
     # Chuẩn bị Data cho thuật toán
     customers_data = {loc.id: {'demand': loc.demand} for loc in locations}
     
-    # Chạy Greedy chia cụm
-    initial_routes = run_greedy_clustering(
-        customers=customers_data, 
-        capacity=request.capacity, 
-        distance_matrix=distance_matrix_value, 
-        depot_id=depot.id
-    )
+    # Chạy Thuật toán chia cụm
+    if request.algorithm_type == "none":
+        # KHÔNG TỐI ƯU: Nhét bừa vào xe theo thứ tự danh sách
+        initial_routes = []
+        current_route = [depot.id]
+        current_load = 0
+        for cid, cdata in customers_data.items():
+            if current_load + cdata['demand'] <= request.capacity:
+                current_route.append(cid)
+                current_load += cdata['demand']
+            else:
+                current_route.append(depot.id)
+                initial_routes.append(current_route)
+                current_route = [depot.id, cid]
+                current_load = cdata['demand']
+        if len(current_route) > 1:
+            current_route.append(depot.id)
+            initial_routes.append(current_route)
+    else:
+        # TỐI ƯU: Chạy Greedy phân cụm thông minh
+        initial_routes = run_greedy_clustering(
+            customers=customers_data, 
+            capacity=request.capacity, 
+            distance_matrix=distance_matrix_value, 
+            depot_id=depot.id
+        )
     
     # Chạy DP (Quy hoạch động) cho từng cụm và build RouteDetail
     final_routes_detail = []

@@ -1,6 +1,7 @@
 import osmnx as ox
 import networkx as nx
 from typing import Tuple, List
+import math
 
 
 def load_street_graph(place_name: str = "District 1, Ho Chi Minh City, Vietnam"):
@@ -40,4 +41,12 @@ def calculate_real_distance(
         return distance, path_coords
 
     except nx.NetworkXNoPath:
+        # Dùng công thức Haversine tính đường thẳng rồi nhân hệ số 1.5
+        R = 6371000 # Bán kính trái đất (mét)
+        phi1, phi2 = math.radians(origin_lat), math.radians(dest_lat)
+        dphi = math.radians(dest_lat - origin_lat)
+        dlambda = math.radians(dest_lng - origin_lng)
+        a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        straight_dist = R * c
         return straight_dist * 1.5, []
