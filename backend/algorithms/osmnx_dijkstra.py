@@ -40,4 +40,4 @@ def calculate_real_distance(
         return distance, path_coords
 
     except nx.NetworkXNoPath:
-        return 999999.0, []
+        return straight_dist * 1.5, []
