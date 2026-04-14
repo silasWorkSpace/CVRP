@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 def run_greedy_clustering(customers: Dict[int, Dict], capacity: int, distance_matrix: Dict[Tuple[int, int], float], depot_id: int = 0) -> List[List[int]]:
     """

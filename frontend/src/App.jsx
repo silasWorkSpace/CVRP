@@ -40,7 +40,8 @@ function App() {
   };
 
   // Hàm này được gọi khi bấm nút "Chạy thuật toán"
-  const handleSolve = async (numVehicles, capacity) => {
+  // 🌟 Đã thêm tham số algorithmType vào đây
+  const handleSolve = async (numVehicles, capacity, algorithmType) => {
     setLoading(true);
     setStats(null);
     setRoutes([]);
@@ -49,13 +50,12 @@ function App() {
       const response = await axios.post(`${API_BASE_URL}/solver/solve-cvrp`, {
         num_vehicles: numVehicles,
         capacity: capacity,
-        algorithm_type: "greedy_dp"
+        algorithm_type: algorithmType // 🌟 Truyền biến động vào thay vì gõ chết "greedy_dp"
       });
       
       const data = response.data;
-      setRoutes(data.routes); // Ném mảng đường đi cho MapViewer
+      setRoutes(data.routes); 
       
-      // Cập nhật bảng thống kê
       setStats({
         total_system_distance: data.total_system_distance,
         execution_time_ms: data.execution_time_ms,
