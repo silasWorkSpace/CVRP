@@ -4,15 +4,26 @@ from typing import Tuple, List
 import math
 
 
-def load_street_graph(place_name: str = "District 1, Ho Chi Minh City, Vietnam"):
+def load_street_graph():
     """
-    Tải đồ thị đường phố từ OpenStreetMap.
-    Chỉ lấy các tuyến đường cho phép ô tô/xe máy chạy (drive).
+    Tải đồ thị đường phố từ OpenStreetMap theo tâm và bán kính.
+    Tránh tải toàn bộ TP.HCM gây quá tải Overpass API.
     """
-    print(f"Đang tải bản đồ khu vực: {place_name}...")
-    G = ox.graph_from_place(place_name, network_type="drive")
-    print("Tải bản đồ hoàn tất!")
-    return G
+    # Tọa độ Chợ Bến Thành làm tâm
+    center_point = (10.7725, 106.6980) 
+    # Bán kính 8000 mét (8km) 
+    radius_meters = 8000 
+    
+    try: 
+        print(f"Đang tải bản đồ nội thành TP.HCM (bán kính {radius_meters/1000}km)...")
+        # Thay graph_from_place bằng graph_from_point
+        G = ox.graph_from_point(center_point, dist=radius_meters, network_type="drive")
+        print("Tải bản đồ hoàn tất!")
+        return G
+    except Exception as e:              
+        print(f"Lỗi khi tải bản đồ: {e}")
+        return None
+    
 
 
 def calculate_real_distance(
