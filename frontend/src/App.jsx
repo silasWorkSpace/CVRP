@@ -7,12 +7,15 @@ import './App.css';
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home'); // 'home' hoặc 'data'
+  const [activeTab, setActiveTab] = useState('home');
   const [locations, setLocations] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchCoords, setSearchCoords] = useState(null);
+  
+  // Lưu thuật toán đang chạy
+  const [currentAlgorithm, setCurrentAlgorithm] = useState('greedy_dp');
 
   useEffect(() => { fetchLocations(); }, []);
 
@@ -42,6 +45,10 @@ function App() {
 
   const handleSolve = async (numVehicles, capacity, algorithmType) => {
     setLoading(true); setStats(null); setRoutes([]);
+    
+    // LƯU LẠI THUẬT TOÁN ĐỂ TRUYỀN XUỐNG BẢN ĐỒ
+    setCurrentAlgorithm(algorithmType);
+
     try {
       const res = await axios.post(`${API_BASE_URL}/solver/solve-cvrp`, {
         num_vehicles: numVehicles, capacity, algorithm_type: algorithmType 
@@ -52,14 +59,13 @@ function App() {
         execution_time_ms: res.data.execution_time_ms,
         vehicles_used: res.data.vehicles_used
       });
-      setActiveTab('home'); // Tự động nhảy về trang bản đồ khi chạy xong
+      setActiveTab('home'); 
     } catch (error) { alert("Lỗi tính toán!"); } 
     finally { setLoading(false); }
   };
 
   return (
     <div className="app-container">
-      {/* THANH NAVBAR */}
       <nav className="navbar">
         <div className="nav-brand">CVRP Optimizer</div>
         <div className="nav-links">
@@ -72,7 +78,7 @@ function App() {
         </div>
       </nav>
 
-      {/* Phần chính*/}
+      {/* Phần chính */}
       <div className="main-content">
         {activeTab === 'home' ? (
           <>
@@ -80,33 +86,33 @@ function App() {
               <ControlPanel onSolve={handleSolve} stats={stats} loading={loading} routes={routes} locations={locations} onSearchResult={setSearchCoords} />
             </div>
             <div className="map-container">
-              <MapViewer locations={locations} routes={routes} onAddLocation={handleAddLocation} searchCoords={searchCoords} />
+              {/* TRUYỀN algorithmType XUỐNG ĐÂY */}
+              <MapViewer 
+                locations={locations} 
+                routes={routes} 
+                onAddLocation={handleAddLocation} 
+                searchCoords={searchCoords} 
+                algorithmType={currentAlgorithm}
+              />
             </div>
           </>
         ) : (
-          /* TRANG QUẢN LÝ DỮ LIỆU */
+          // Tab quản lý dữ liệu
           <div className="data-panel">
             <h2>Danh sách Địa điểm đã lưu</h2>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Tên địa điểm</th>
-                  <th>Phân loại</th>
-                  <th>Nhu cầu (Demand)</th>
-                  <th>Hành động</th>
+                  <th>ID</th><th>Tên địa điểm</th><th>Phân loại</th><th>Nhu cầu (Demand)</th><th>Hành động</th>
                 </tr>
               </thead>
               <tbody>
                 {locations.map(loc => (
                   <tr key={loc.id}>
-                    <td>#{loc.id}</td>
-                    <td><strong>{loc.name}</strong></td>
+                    <td>#{loc.id}</td><td><strong>{loc.name}</strong></td>
                     <td>{loc.is_depot ? <span className="badge depot">Kho hàng</span> : <span className="badge customer">Khách hàng</span>}</td>
                     <td>{loc.is_depot ? '-' : loc.demand}</td>
-                    <td>
-                      <button className="delete-btn" onClick={() => handleDeleteLocation(loc.id)}>Xóa</button>
-                    </td>
+                    <td><button className="delete-btn" onClick={() => handleDeleteLocation(loc.id)}>Xóa</button></td>
                   </tr>
                 ))}
               </tbody>

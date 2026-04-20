@@ -10,36 +10,59 @@ const tempIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointh
 const routeColors = ['#E74C3C', '#2980B9', '#27AE60', '#8E44AD', '#F39C12', '#16A085'];
 
 // --- 2. COMPONENT VẼ ĐƯỜNG THẬT ---
-const RealRoadLayer = ({ route, locations, color }) => {
+const RealRoadLayer = ({ route, locations, color, algorithmType }) => {
   const [realPath, setRealPath] = useState([]);
+
+  // Kịch bản nét đứt
+  const getRouteStyle = () => {
+    switch (algorithmType) {
+      case 'none': 
+        return { color: color, weight: 4, opacity: 0.6, dashArray: '10, 15' };
+      case 'greedy': 
+        return { color: color, weight: 5, opacity: 0.8, dashArray: '8, 8' };
+      case 'greedy_dp': 
+        return { color: color, weight: 7, opacity: 1.0, dashArray: null };
+      default:
+        return { color: color, weight: 5, opacity: 0.8, dashArray: '5, 10' };
+    }
+  };
+
+  const style = getRouteStyle();
 
   useEffect(() => {
     const fetchOSRMRoute = async () => {
       if (!route.sequence || route.sequence.length < 2) return;
 
-      // Chuyển danh sách ID thành chuỗi tọa độ: "lng,lat;lng,lat;..."
-      const coordinates = route.sequence
-        .map(id => {
-          const loc = locations.find(l => l.id === id);
-          return loc ? `${loc.lng},${loc.lat}` : null;
-        })
-        .filter(c => c !== null)
-        .join(';');
+      // 1. LỌC ĐIỂM TRÙNG LẶP 
+      const validLocations = [];
+      route.sequence.forEach((id, idx) => {
+        if (idx > 0 && id === route.sequence[idx - 1]) return; // Bỏ qua điểm giống hệt điểm trước nó
+        const loc = locations.find(l => l.id === id);
+        if (loc) validLocations.push(loc);
+      });
+
+      if (validLocations.length < 2) return;
+
+      const coordinates = validLocations.map(l => `${l.lng},${l.lat}`).join(';');
+      const fallbackPath = validLocations.map(l => [l.lat, l.lng]); // Đường dự phòng
 
       try {
-        // Gọi API OSRM để lấy đường đi thực tế
         const response = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson`
         );
         const data = await response.json();
 
-        if (data.routes && data.routes.length > 0) {
-          // OSRM trả về [lng, lat], Leaflet cần [lat, lng]
+        // 2. CƠ CHẾ FALLBACK 
+        if (data.code === "Ok" && data.routes && data.routes.length > 0) {
           const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
           setRealPath(coords);
+        } else {
+          console.warn("OSRM không vẽ được, tự động chuyển sang đường chim bay.");
+          setRealPath(fallbackPath);
         }
       } catch (err) {
-        console.error("OSRM Error:", err);
+        console.error("Lỗi API OSRM:", err);
+        setRealPath(fallbackPath); 
       }
     };
 
@@ -52,18 +75,18 @@ const RealRoadLayer = ({ route, locations, color }) => {
     <>
       <Polyline 
         positions={realPath} 
-        color={color} 
-        weight={5} 
-        opacity={0.8} 
-        dashArray="1, 10"
-        className="animated-path" 
+        color={style.color} 
+        weight={style.weight} 
+        opacity={style.opacity} 
+        dashArray={style.dashArray}
+        className={algorithmType === 'greedy_dp' ? "optimized-path" : "standard-path"} 
       />
-      <MovingCar pathCoordinates={realPath} color={color} vehicleId={route.vehicle_id} />
+      <MovingCar pathCoordinates={realPath} color={style.color} vehicleId={route.vehicle_id} />
     </>
   );
 };
 
-// --- 3. CÁC COMPONENT PHỤ TRỢ (CLICK, SEARCH, POPUP) ---
+// --- 3. CÁC COMPONENT PHỤ TRỢ ---
 function ClickHandler({ setTempLocation }) {
   useMapEvents({ click(e) { setTempLocation({ lat: e.latlng.lat, lng: e.latlng.lng }); } });
   return null;
@@ -106,7 +129,7 @@ function AddLocationPopup({ position, onSave, onCancel }) {
 }
 
 // --- 4. COMPONENT CHÍNH ---
-const MapViewer = ({ locations, routes, onAddLocation, searchCoords }) => {
+const MapViewer = ({ locations, routes, onAddLocation, searchCoords, algorithmType }) => {
   const [tempLocation, setTempLocation] = useState(null);
 
   useEffect(() => { if (searchCoords) setTempLocation(searchCoords); }, [searchCoords]);
@@ -120,20 +143,19 @@ const MapViewer = ({ locations, routes, onAddLocation, searchCoords }) => {
       <SearchFlyHandler searchCoords={searchCoords} />
       <ClickHandler setTempLocation={setTempLocation} />
 
-      {/* Địa điểm từ DB */}
       {locations.map((loc) => (
         <Marker key={loc.id} position={[loc.lat, loc.lng]} icon={loc.is_depot ? depotIcon : customerIcon}>
           <Popup><strong>{loc.name}</strong><br/>{loc.is_depot ? 'Kho' : `Nhu cầu: ${loc.demand}`}</Popup>
         </Marker>
       ))}
 
-      {/* LỘ TRÌNH THỰC TẾ (OSRM) */}
       {routes && routes.map((route, index) => (
         <RealRoadLayer 
           key={index} 
           route={route} 
           locations={locations} 
           color={routeColors[index % routeColors.length]} 
+          algorithmType={algorithmType} 
         />
       ))}
 

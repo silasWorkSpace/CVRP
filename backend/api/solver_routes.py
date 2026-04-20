@@ -70,7 +70,7 @@ def solve_routing_problem(request: schemas.CVRPSolveRequest, db: Session = Depen
 
     # 3. Chạy Thuật toán Lõi
     # Chuẩn bị Data cho thuật toán
-    customers_data = {loc.id: {'demand': loc.demand} for loc in locations}
+    customers_data = {loc.id: {'demand': loc.demand} for loc in locations if not loc.is_depot}
     
     # Chạy Thuật toán chia cụm
     if request.algorithm_type == "none":
